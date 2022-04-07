@@ -1,5 +1,5 @@
 import { SimpleChange } from '@angular/core';
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { PlotlyComponent } from './plotly.component';
 import { PlotlyService } from './plotly.service';
@@ -14,18 +14,16 @@ describe('PlotlyComponent', () => {
     let fixture: ComponentFixture<PlotlyComponent>;
     let windowSpy: jasmine.SpyObj<Window>;
 
-    beforeEach(async(() => {
+    beforeEach(async () => {
         windowSpy = jasmine.createSpyObj('Window', ['addEventListener', 'removeEventListener']);
 
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             declarations: [PlotlyComponent],
             providers: [
                 PlotlyService,
             ],
         }).compileComponents();
-    }));
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(PlotlyComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
@@ -71,47 +69,46 @@ describe('PlotlyComponent', () => {
         expect(component.updatePlot).toHaveBeenCalledTimes(2);
     });
 
-    it('should update the graph when the data changes', (done) => {
+    it('should update the graph when the data changes', async () => {
         spyOn(component, 'updatePlot');
         component.data = [{ y: [10, 15, 13, 17], type: 'box' }];
 
-        component.createPlot().then(() => {
-            component.ngDoCheck();
-            expect(component.updatePlot).not.toHaveBeenCalled();
+        await component.createPlot()
 
-            component.data = [{ y: [11, 15, 13, 17], type: 'box' }];
-            component.ngDoCheck();
-            expect(component.updatePlot).toHaveBeenCalled();
+        component.ngDoCheck();
+        expect(component.updatePlot).not.toHaveBeenCalled();
 
-            component.ngDoCheck();
-            expect(component.updatePlot).toHaveBeenCalledTimes(1);
+        component.data = [{ y: [11, 15, 13, 17], type: 'box' }];
+        component.ngDoCheck();
+        expect(component.updatePlot).toHaveBeenCalled();
 
-            component.data[0].y[0] = 12;
-            component.ngDoCheck();
-            expect(component.updatePlot).toHaveBeenCalledTimes(2);
-            done();
-        });
+        component.ngDoCheck();
+        expect(component.updatePlot).toHaveBeenCalledTimes(1);
+
+        component.data[0].y[0] = 12;
+        component.ngDoCheck();
+        expect(component.updatePlot).toHaveBeenCalledTimes(2);
     });
 
-    it('should update the layout when the object changes', (done) => {
+    it('should update the layout when the object changes', async () => {
         spyOn(component, 'updatePlot');
         component.layout = {title: 'title one'};
-        component.createPlot().then(() => {
-            component.ngDoCheck();
-            expect(component.updatePlot).not.toHaveBeenCalled();
 
-            component.layout = {title: 'title two'};
-            component.ngDoCheck();
-            expect(component.updatePlot).toHaveBeenCalled();
+        await component.createPlot()
 
-            component.ngDoCheck();
-            expect(component.updatePlot).toHaveBeenCalledTimes(1);
+        component.ngDoCheck();
+        expect(component.updatePlot).not.toHaveBeenCalled();
 
-            component.layout.title = 'title three ';
-            component.ngDoCheck();
-            expect(component.updatePlot).toHaveBeenCalledTimes(2);
-            done();
-        });
+        component.layout = {title: 'title two'};
+        component.ngDoCheck();
+        expect(component.updatePlot).toHaveBeenCalled();
+
+        component.ngDoCheck();
+        expect(component.updatePlot).toHaveBeenCalledTimes(1);
+
+        component.layout.title = 'title three ';
+        component.ngDoCheck();
+        expect(component.updatePlot).toHaveBeenCalledTimes(2);
     });
 
     it('should add the className in #plotEl', () => {
@@ -172,7 +169,7 @@ describe('PlotlyComponent', () => {
         expect(component.resizeHandler).toBeUndefined();
     });
 
-    it('should clear all added window events on destroy', async (done) => {
+    it('should clear all added window events on destroy', async () => {
         const windowListenerCount = (window as any).eventListeners().length;
 
         // make component responsive via both the lib and the component (at least 2 window events are added)
@@ -188,12 +185,9 @@ describe('PlotlyComponent', () => {
 
         // amount of listeners should be the same as before initializing the component
         expect((window as any).eventListeners().length).toEqual(windowListenerCount);
-
-        done();
     });
 
-    it('should not cause errors if window is resized after a responsive chart is destroyed', async (done) => {
-
+    it('should not cause errors if window is resized after a responsive chart is destroyed', async () => {
         // make component responsive via both the lib and the component
         component.layout = { title: 'responsive', autosize: true };
         component.config = { responsive: true };
@@ -208,7 +202,7 @@ describe('PlotlyComponent', () => {
         await fixture.whenStable();
 
         // responsive:true and useResizeHandler:true both cause .resize() to be called
-        expect(PlotlyJS.Plots.resize).toHaveBeenCalledTimes(2);
+        expect(PlotlyJS.Plots.resize).toHaveBeenCalledTimes(1);
         PlotlyJS.Plots.resize.calls.reset();
 
         fixture.destroy();
@@ -218,7 +212,5 @@ describe('PlotlyComponent', () => {
         await fixture.whenStable();
 
         expect(PlotlyJS.Plots.resize).not.toHaveBeenCalled();
-
-        done();
     });
 });
